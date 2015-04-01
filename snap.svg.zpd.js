@@ -386,7 +386,7 @@
          * Register handlers
          * desktop and mobile (?)
          */
-        var _setupHandlers = function setupHandlers(svgElement, handlerFunctions) {
+        var _setupHandlers = function setupHandlers(svgElement, handlerFunctions, zpdOptions) {
 
             // mobile
             // (?)
@@ -399,12 +399,14 @@
                 svgElement.addEventListener('mousedown', handlerFunctions.mouseDown, false);
                 svgElement.addEventListener('mousemove', handlerFunctions.mouseMove, false);
 
-                if (navigator.userAgent.toLowerCase().indexOf('webkit') >= 0 ||
-                    navigator.userAgent.toLowerCase().indexOf('trident') >= 0) {
-                    svgElement.addEventListener('mousewheel', handlerFunctions.mouseWheel, false); // Chrome/Safari
-                }
-                else {
-                    svgElement.addEventListener('DOMMouseScroll', handlerFunctions.mouseWheel, false); // Others
+                if (zpdOptions.enableMouseWheel) {
+                    if (navigator.userAgent.toLowerCase().indexOf('webkit') >= 0 ||
+                        navigator.userAgent.toLowerCase().indexOf('trident') >= 0) {
+                        svgElement.addEventListener('mousewheel', handlerFunctions.mouseWheel, false); // Chrome/Safari
+                    }
+                    else {
+                        svgElement.addEventListener('DOMMouseScroll', handlerFunctions.mouseWheel, false); // Others
+                    }
                 }
 
             }
@@ -413,18 +415,20 @@
         /**
          * remove event handlers
          */
-        var _tearDownHandlers = function tearDownHandlers(svgElement, handlerFunctions) {
+        var _tearDownHandlers = function tearDownHandlers(svgElement, handlerFunctions, zpdOptions) {
 
             svgElement.removeEventListener('mouseup', handlerFunctions.mouseUp, false);
             svgElement.removeEventListener('mousedown', handlerFunctions.mouseDown, false);
             svgElement.removeEventListener('mousemove', handlerFunctions.mouseMove, false);
 
-            if (navigator.userAgent.toLowerCase().indexOf('webkit') >= 0 ||
-                navigator.userAgent.toLowerCase().indexOf('trident') >= 0) {
-                svgElement.removeEventListener('mousewheel', handlerFunctions.mouseWheel, false);
-            }
-            else {
-                svgElement.removeEventListener('DOMMouseScroll', handlerFunctions.mouseWheel, false);
+            if (zpdOptions.enableMouseWheel) {
+                if (navigator.userAgent.toLowerCase().indexOf('webkit') >= 0 ||
+                    navigator.userAgent.toLowerCase().indexOf('trident') >= 0) {
+                    svgElement.removeEventListener('mousewheel', handlerFunctions.mouseWheel, false);
+                }
+                else {
+                    svgElement.removeEventListener('DOMMouseScroll', handlerFunctions.mouseWheel, false);
+                }
             }
         };
 
@@ -436,11 +440,12 @@
 
             // define some custom options
             var zpdOptions = {
-                pan: true,          // enable or disable panning (default enabled)
-                zoom: true,         // enable or disable zooming (default enabled)
-                drag: false,        // enable or disable dragging (default disabled)
-                zoomScale: 0.2,     // define zoom sensitivity
-                zoomThreshold: null // define zoom threshold
+                pan: true,           // enable or disable panning (default enabled)
+                zoom: true,          // enable or disable zooming (default enabled)
+                drag: false,         // enable or disable dragging (default disabled)
+                zoomScale: 0.2,      // define zoom sensitivity
+                zoomThreshold: null, // define zoom threshold
+                enableMouseWheel: false
             };
 
             // the situation event of zpd, may be init, reinit, destroy, save, origin
@@ -494,7 +499,7 @@
                 zpdElement = _initZpdElement(self, zpdOptions);
 
                 // setup the handlers for our svg-canvas
-                _setupHandlers(self.node, zpdElement.handlerFunctions);
+                _setupHandlers(self.node, zpdElement.handlerFunctions, zpdOptions);
 
                 snapsvgzpd.dataStore[self.id] = zpdElement;
             }
@@ -515,7 +520,7 @@
                 case situationState.destroy:
 
                     // remove event handlers
-                    _tearDownHandlers(self.node, zpdElement.handlerFunctions);
+                    _tearDownHandlers(self.node, zpdElement.handlerFunctions, zpdOptions);
 
                     // remove our custom <g> element
                     _removeNodeKeepChildren(self.node.firstChild);
