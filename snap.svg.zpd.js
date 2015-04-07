@@ -170,6 +170,14 @@
         };
 
         /**
+         * Get current matrix representation
+         */
+        var _getCurrentMatrix = function _getCurrentMatrix(element) {
+
+            return element.getTransformToElement(rootSvgObject);
+        };
+
+        /**
          * add a new <g> element to the paper
          * add paper nodes into <g> element (Snapsvg Element)
          * and give the nodes an unique id like 'snapsvg-zpd-12345'
@@ -298,7 +306,7 @@
                     // Pan mode
                     zpdElement.data.state = 'pan';
 
-                    zpdElement.data.stateTf = g.getCTM().inverse();
+                    zpdElement.data.stateTf = _getCurrentMatrix(g).inverse();
 
                     zpdElement.data.stateOrigin = _getEventPoint(event, zpdElement.data.svg).matrixTransform(zpdElement.data.stateTf);
 
@@ -309,7 +317,7 @@
 
                     zpdElement.data.stateTarget = event.target;
 
-                    zpdElement.data.stateTf = g.getCTM().inverse();
+                    zpdElement.data.stateTf = _getCurrentMatrix(g).inverse();
 
                     zpdElement.data.stateOrigin = _getEventPoint(event, zpdElement.data.svg).matrixTransform(zpdElement.data.stateTf);
 
@@ -336,13 +344,13 @@
                 } else if (zpdElement.data.state == 'drag' && zpdElement.options.drag) {
 
                     // Drag mode
-                    var dragPoint = _getEventPoint(event, zpdElement.data.svg).matrixTransform(g.getCTM().inverse());
+                    var dragPoint = _getEventPoint(event, zpdElement.data.svg).matrixTransform(_getCurrentMatrix(g).inverse());
 
                     _setCTM(zpdElement.data.stateTarget,
                             zpdElement.data.root.createSVGMatrix()
                             .translate(dragPoint.x - zpdElement.data.stateOrigin.x, dragPoint.y - zpdElement.data.stateOrigin.y)
-                            .multiply(g.getCTM().inverse())
-                            .multiply(zpdElement.data.stateTarget.getCTM()));
+                            .multiply(_getCurrentMatrix(g).inverse())
+                            .multiply(zpdElement.data.stateTarget.getTransformToElement(rootSvgObject)));
 
                     zpdElement.data.stateOrigin = dragPoint;
                 }
@@ -375,15 +383,15 @@
 
                 var p = _getEventPoint(event, zpdElement.data.svg);
 
-                p = p.matrixTransform(g.getCTM().inverse());
+                p = p.matrixTransform(_getCurrentMatrix(g).inverse());
 
                 // Compute new scale matrix in current mouse position
                 var k = zpdElement.data.root.createSVGMatrix().translate(p.x, p.y).scale(z).translate(-p.x, -p.y);
 
-                _setCTM(g, g.getCTM().multiply(k), zpdElement.options.zoomThreshold);
+                _setCTM(g, _getCurrentMatrix(g).multiply(k), zpdElement.options.zoomThreshold);
 
                 if (typeof(stateTf) == 'undefined') {
-                    zpdElement.data.stateTf = g.getCTM().inverse();
+                    zpdElement.data.stateTf = _getCurrentMatrix(g).inverse();
                 }
 
                 zpdElement.data.stateTf = zpdElement.data.stateTf.multiply(k.inverse());
@@ -555,7 +563,7 @@
 
                     var g = document.getElementById(snapsvgzpd.uniqueIdPrefix + self.id);
 
-                    var returnValue = g.getCTM();
+                    var returnValue = _getCurrentMatrix(g);
 
                     // callback
                     if (callbackFunc) {
@@ -602,7 +610,7 @@
                 // get a reference to the element
                 var zpdElement = snapsvgzpd.dataStore[self.id].element;
 
-                var currentTransformMatrix = zpdElement.node.getTransformToElement(rootSvgObject);
+                var currentTransformMatrix = _getCurrentMatrix(zpdElement.node);
                 var currentZoom = currentTransformMatrix.a;
                 var originX = currentTransformMatrix.e;
                 var originY = currentTransformMatrix.f;
@@ -648,7 +656,7 @@
 
                 var zpdElement = snapsvgzpd.dataStore[self.id].element;
 
-                var gMatrix = zpdElement.node.getCTM(),
+                var gMatrix = _getCurrentMatrix(zpdElement.node),
                     matrixX = _increaseDecreaseOrNumber(gMatrix.e, x),
                     matrixY = _increaseDecreaseOrNumber(gMatrix.f, y),
                     matrixString = "matrix(" + gMatrix.a + "," + gMatrix.b + "," + gMatrix.c + "," + gMatrix.d + "," + matrixX + "," + matrixY + ")";
@@ -675,7 +683,7 @@
 
                 var zpdElement = snapsvgzpd.dataStore[self.id].element;
 
-                var gMatrix = zpdElement.node.getCTM(),
+                var gMatrix = _getCurrentMatrix(zpdElement.node),
                     matrixString = "matrix(" + gMatrix.a + "," + gMatrix.b + "," + gMatrix.c + "," + gMatrix.d + "," + gMatrix.e + "," + gMatrix.f + ")";
 
                 if (!x || typeof x !== 'number') {
